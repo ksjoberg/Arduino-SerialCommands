@@ -41,16 +41,15 @@ public:
 class SerialCommands
 {
 public:
-	SerialCommands(Stream* serial, char* buffer, int16_t buffer_len, const char* term = "\r\n", const char* delim = " ") :
+	SerialCommands(Stream* serial, char* buffer, int16_t buffer_len, const char* delim = " ") :
 		serial_(serial),
 		buffer_(buffer),
 		buffer_len_(buffer!=NULL && buffer_len > 0 ? buffer_len - 1 : 0), //string termination char '\0'
-		term_(term),
 		delim_(delim),
 		default_handler_(NULL),
 		buffer_pos_(0),
 		last_token_(NULL), 
-		term_pos_(0),
+		last_char_(0),
 		commands_head_(NULL),
 		commands_tail_(NULL),
 		onek_cmds_head_(NULL),
@@ -111,12 +110,11 @@ private:
 	Stream* serial_;
 	char* buffer_;
 	int16_t buffer_len_;
-	const char* term_;
 	const char* delim_;
 	void(*default_handler_)(SerialCommands*, const char*);
 	int16_t buffer_pos_;
 	char* last_token_;
-	int8_t term_pos_;
+	char last_char_;
 	SerialCommand* commands_head_;
 	SerialCommand* commands_tail_;
 	SerialCommand* onek_cmds_head_;

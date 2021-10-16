@@ -60,8 +60,6 @@ SERIAL_COMMANDS_ERRORS SerialCommands::ReadSerial()
 		Serial.print(buffer_len_);
 		Serial.print(" bufPos=");
 		Serial.print(buffer_pos_);
-		Serial.print(" termPos=");
-		Serial.print(term_pos_);
 		if (ch<32)
 		{
 			Serial.print(" ch=#");
@@ -89,24 +87,23 @@ SERIAL_COMMANDS_ERRORS SerialCommands::ReadSerial()
 #ifdef SERIAL_COMMANDS_DEBUG			
 			Serial.println("Buffer full");
 #endif
+			last_char_ = ch;
 			ClearBuffer();
 			return SERIAL_COMMANDS_ERROR_BUFFER_FULL;
 		}
 
 		if(buffer_pos_==1 && CheckOneKeyCmd())
 		{
+			last_char_ = ch;
 			return SERIAL_COMMANDS_SUCCESS;
 		}
 
-		if (term_[term_pos_] != ch)
+		if (ch == '\r' || (ch == '\n' && last_char_ != '\r'))
 		{
-			term_pos_ = 0;
-			continue;
-		}
-
-		if (term_[++term_pos_] == 0)
-		{
-			buffer_[buffer_pos_ - strlen(term_)] = '\0';
+			// CRLF fall in here on the CR (but not the following LF, which is ignored)
+			// Lone LFs fall in here on the LF
+			last_char_ = ch;
+			buffer_[--buffer_pos_] = '\0';
 
 #ifdef SERIAL_COMMANDS_DEBUG
 			Serial.print("Received: [");
@@ -146,6 +143,10 @@ SERIAL_COMMANDS_ERRORS SerialCommands::ReadSerial()
 				}
 			}
 
+			ClearBuffer();
+		}
+		else if (ch == '\n')
+		{
 			ClearBuffer();
 		}
 	}
@@ -210,7 +211,6 @@ void SerialCommands::ClearBuffer()
 {
 	buffer_[0] = '\0';
 	buffer_pos_ = 0;
-	term_pos_ = 0;
 }
 
 char* SerialCommands::Next()
